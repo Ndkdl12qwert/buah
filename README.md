@@ -5,8 +5,8 @@ One-click compile Bash, supporting multiple architectures, multiple versions, an
 ## Supported Scope
 
 # x86_64 Dynamic / x86_64 Static / ARM64 Dynamic / ARM64 Static
-# i686 Dynamic / i686 Static / ARM32 Dynamic Hard / ARM32 Dynamic Soft
-# /ARM32 Dynamic Soft / ARM32 Static Hard
+# i686 Dynamic / i686 Static / ARM32 Dynamic HardFloating point / ARM32 Dynamic SoftFloating point
+# /ARM32 Dynamic SoftFloating point / ARM32 Static HardFloating point
 # RISC-V64 Dynamic / RISC-V64 Static
 
 RISC-V32 is under maintenance!!!
