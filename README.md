@@ -28,7 +28,7 @@ One-click compile Bash, supporting multiple architectures, multiple versions, an
 
 ## Statistics
 
-- Lines of code: 1117 (actually usable 959)
+- Lines of code: 1147
 - Supported architectures: 6
 - Compilation combinations: 50
 - Number of states: 300
