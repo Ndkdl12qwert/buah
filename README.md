@@ -1,5 +1,6 @@
 # bashbuilder
 
+##### Note, the RISC-V32 version only supports Bash 5.3, I'm sorry, I have to do it this way!
 One-click compile Bash, supporting multiple architectures, multiple versions, and static/dynamic linking.
 
 ## Supported Scope
@@ -8,8 +9,6 @@ One-click compile Bash, supporting multiple architectures, multiple versions, an
 # i686 Dynamic / i686 Static / ARM32 Dynamic HardFloating point / ARM32 Dynamic SoftFloating point
 # /ARM32 Dynamic SoftFloating point / ARM32 Static HardFloating point
 # RISC-V64 Dynamic / RISC-V64 Static
-
-RISC-V32 is under maintenance!!!
 
 ## Features
 
@@ -35,6 +34,7 @@ RISC-V32 is under maintenance!!!
 chinese
 
 # bashbuilder
+##### 注意，risc-v32版本只支持bash5.3，很抱歉，我不得不这样！
 
 一键编译 Bash，支持多架构、多版本、静态/动态链接。
 
@@ -44,9 +44,8 @@ chinese
 # i686 Dynamic/i686 static/ARM32 Dynamic HardFloating point/ARM32 Dynamic softFloating point
 # /ARM32 Dynamic softFloating point/ARM32 static HardFloating point
 # RISC-V64 Dynamic RISC-V64 Static
+# RISC-V32 Dynamic RISC-V64 Static
 
-
-RISC-V32正在维护！！！
 
 
 ## 功能
@@ -60,11 +59,11 @@ RISC-V32正在维护！！！
 
 ## 使用方法
 
-./bash-builder.sh
+./bash-builder.bash
 
 ## 统计
 
-- 代码行数：1117（实际可用959）
+- 代码行数：1147
 - 支持架构：6
 - 编译组合：50+
 - 状态数：300+
