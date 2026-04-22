@@ -1,11 +1,14 @@
 #!/bin/bash
-alias slepp='sleep'
 
 RED='\033[1;31m'
 GREEN='\033[1;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
+ba=$(find $HOME/bashbuild -name "bash")
+if [ $? -eq 0 ]; then
+    cp -r ${ba} bashelf/ || mkdir ~/bashelf || cp -r ${ba} bashelf/
+fi
 if [[ -d "$HOME/bashbuild" ]]; then
     rm -rf "$HOME/bashbuild"
 fi
@@ -56,26 +59,57 @@ install_dependencies() {
 }
 
 install_risc-v32_gnu() {
-    find . -name riscv32-unknown-linux-gnu-gcc &> /dev/null
-    if [ $? -eq 0 ]; then
-        echo "RISC-V 32-bit toolchain already installed."
-        return
-    fi
-    mkdir -p $HOME/riscvbuild && cd $HOME/riscvbuild
-    echo "${GREEN}This may take some time... For the sake of your architecture, I have no choice.${NC}"
-    slepp 2
-    echo "${GREEN}This might take several hours, it's okay, it only happens the first time.${NC}"
-    git clone --recursive https://github.com/riscv-collab/riscv-gnu-toolchain
-    cd ${pwd}/riscv-gnu-toolchain
-    mkdir build && cd build
-    ../configure --prefix=$HOME/riscv32 --with-arch=rv32gc --with-abi=ilp32d
-    read -p "Enter number of cores for compilation [default: $(nproc)]Recommendation 3: " cores
-    cores=${cores:-$(nproc)}
-    make -j"$cores" V=1 2>&1 | tee build.log
-    echo 'export PATH=$HOME/riscv32/bin:$PATH' >> ~/.bashrc
-    source ~/.bashrc
-    if ! command -v riscv32-unknown-linux-gnu-gcc &> /dev/null; then
-        error_exit "RISC-V 32-bit toolchain installation failed"
+    echo -e "${GREEN}I'm very sorry, for your experience, I had to spend a few hours making you compile this damn toolchain. Apologies again.${NC}"
+    sleep 2
+    local version="$1"
+    if ! [[ ${version} == "bash-5.3" ]]; then
+        find . -name riscv32-unknown-linux-gnu-gcc &> /dev/null
+        if [ $? -eq 0 ]; then
+            echo "RISC-V 32-bit toolchain already installed."
+            return
+        fi
+    
+        mkdir -p $HOME/riscvbuild && cd $HOME/riscvbuild
+        echo "${GREEN}This may take some time... For the sake of your architecture, I have no choice.${NC}"
+        slepp 2
+        echo "${GREEN}This might take several hours, it's okay, it only happens the first time.${NC}"
+        git clone --recursive https://github.com/riscv-collab/riscv-gnu-toolchain
+        cd ${pwd}/riscv-gnu-toolchain
+        mkdir build && cd build
+        ../configure --prefix=$HOME/riscv32 --with-arch=rv32gc --with-abi=ilp32d
+        read -p "Enter number of cores for compilation [default: $(nproc)]Recommendation 3: " cores
+        cores=${cores:-$(nproc)}
+        make -j"$cores" V=1 2>&1 | tee build.log
+        if ! command -v riscv32-unknown-linux-gnu-gcc &> /dev/null; then
+            error_exit "RISC-V 32-bit toolchain installation failed"
+        fi
+    else
+        find . -name riscv32-unknown-linux-gnu-gcc &> /dev/null
+        if [ $? -eq 0 ]; then
+            echo "RISC-V 32-bit toolchain already installed."
+            return
+        fi
+    
+        mkdir -p $HOME/riscvbuild && cd $HOME/riscvbuild
+        echo "${GREEN}This may take some time... For the sake of your architecture, I have no choice.${NC}"
+        slepp 2
+        echo "${GREEN}This might take several hours, it's okay, it only happens the first time.${NC}"
+        git clone --recursive https://github.com/riscv-collab/riscv-gnu-toolchain
+        cd ${pwd}/riscv-gnu-toolchain
+        git checkout 2023.10.12
+        git submodule update --init --recursive
+        mkdir build && cd build
+        ../configure \
+            --prefix=$HOME/riscv32-gcc13 \
+            --target=riscv32-unknown-linux-gnu \
+            --with-arch=rv32gc \
+            --with-abi=ilp32d
+        read -p "Enter number of cores for compilation [default: $(nproc)]Recommendation 3: " cores
+        cores=${cores:-$(nproc)}
+        make -j"$cores" V=1 2>&1 | tee build.log
+        if ! command -v riscv32-unknown-linux-gnu-gcc &> /dev/null; then
+            error_exit "RISC-V 32-bit toolchain installation failed"
+        fi
     fi
 }
 
@@ -826,18 +860,23 @@ build_bash_version_DR3() {
     read -p "Enter number of cores for compilation [default: $(nproc)]: " cores
     cores=${cores:-$(nproc)}
     
-    sed -i 's/extern void add_unwind_protect ();/extern void add_unwind_protect (void *, void *);/' unwind_prot.h
-
     echo "Configuring..."
-    ./configure \
-    --host=riscv32-unknown-linux-gnu \
-    --prefix=/usr/local \
-    LDFLAGS="-Wl,-rpath-link=$HOME/riscv32/sysroot/usr/lib" || error_exit "Configure failed"
+    if [[ "$version" == "5.3" ]]; then
+        ./configure \
+        --host=riscv32-unknown-linux-gnu \
+        --prefix=/usr/local || error_exit "Configure failed"
     
-    echo "Compiling with $cores cores..."
-    make -j"$cores" CC=riscv32-unknown-linux-gnu-gcc 2>&1 | tee build.log
+        echo "Compiling with $cores cores..."
+        make -j"$cores" CC="$HOME/riscv32/bin/riscv32-unknown-linux-gnu-gcc" 2>&1 | tee build.log
+    else
+        ./configure \
+        --host=riscv32-unknown-linux-gnu \
+        --prefix=/usr/local \
+        CFLAGS="-Wno-error=old-style-definition -Wno-error=incompatible-pointer-types" || error_exit "Configure failed"
     
-    # 检查编译结果（更可靠的方法）
+        echo "Compiling with $cores cores..."
+        make -j"$cores" CC="$HOME/riscv32-gcc13/bin/riscv32-unknown-linux-gnu-gcc" 2>&1 | tee build.log
+    fi
     if [ -f "bash" ] || [ -f "./bash" ]; then
         echo -e "${GREEN}Compilation successful!${NC}"
     else
@@ -867,6 +906,7 @@ build_bash_version_SR3() {
         libtool patchutils bc zlib1g-dev libexpat-dev ninja-build libglib2.0-dev
         install_risc-v32_gnu
     fi
+
     local version="$1"
     local tarball="bash-${version}.tar.gz"
     local url="https://ftp.gnu.org/gnu/bash/${tarball}"
@@ -891,20 +931,27 @@ build_bash_version_SR3() {
     read -p "Enter number of cores for compilation [default: $(nproc)]: " cores
     cores=${cores:-$(nproc)}
     
-    sed -i 's/extern void add_unwind_protect ();/extern void add_unwind_protect (void *, void *);/' unwind_prot.h
-    
     echo "Configuring..."
-    ./configure \
-    --host=riscv32-unknown-linux-gnu \
-    --prefix=/usr/local \
-    --enable-static-link \
-    --without-bash-malloc \
-    LDFLAGS="-static -Wl,-rpath-link=$HOME/riscv32/sysroot/usr/lib" || error_exit "Configure failed"
+    if [[ "$version" == "5.3" ]]; then
+        ./configure \
+        --host=riscv32-unknown-linux-gnu \
+        --enable-static-link \
+        --without-bash-malloc \
+        --prefix=/usr/local || error_exit "Configure failed"
     
-    echo "Compiling with $cores cores..."
-    make -j"$cores" CC=riscv32-unknown-linux-gnu-gcc 2>&1 | tee build.log
+        echo "Compiling with $cores cores..."
+        make -j"$cores" CC="$HOME/riscv32/bin/riscv32-unknown-linux-gnu-gcc" 2>&1 | tee build.log
+    else
+        ./configure \
+        --host=riscv32-unknown-linux-gnu \
+        --prefix=/usr/local \
+        --enable-static-link \
+        --without-bash-malloc \
+        CFLAGS="-Wno-error=old-style-definition -Wno-error=incompatible-pointer-types" || error_exit "Configure failed"
     
-    # 检查编译结果（更可靠的方法）
+        echo "Compiling with $cores cores..."
+        make -j"$cores" CC="$HOME/riscv32-gcc13/bin/riscv32-unknown-linux-gnu-gcc" 2>&1 | tee build.log
+    fi
     if [ -f "bash" ] || [ -f "./bash" ]; then
         echo -e "${GREEN}Compilation successful!${NC}"
     else
@@ -1113,8 +1160,8 @@ while true; do
         fi
     elif [[ "$arch" == "RISC-V32" || "$arch" == "risc-v32" ]]; then
         if [[ "$build_type" == "Dynamic" || "$build_type" == "dynamic" ]]; then
-            read -p "Select version [Can only choose: 5.3]: " version
-            version="5.3"
+            read -p "Select version [default: 5.2]: " version
+            version=${version:-5.2}
     
             case $version in
                 5.0|5.1|5.2|5.3)
@@ -1127,9 +1174,9 @@ while true; do
                 esac
             echo -e "${GREEN}✓ Script completed!${NC}"
         elif [[ "$build_type" == "Static" || "$build_type" == "static" ]]; then
-            read -p "Select version [Can only choose: 5.3]: " version
+            read -p "Select version [default: 5.2]: " version
     
-            version="5.3"
+            version=${version:-5.2}
     
             case $version in
                 5.0|5.1|5.2|5.3)
