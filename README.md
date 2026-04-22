@@ -1,6 +1,5 @@
 # bashbuilder
 
-##### Note, the RISC-V32 version only supports Bash 5.3, I'm sorry, I have to do it this way!
 One-click compile Bash, supporting multiple architectures, multiple versions, and static/dynamic linking.
 
 ## Supported Scope
@@ -37,7 +36,6 @@ One-click compile Bash, supporting multiple architectures, multiple versions, an
 chinese
 
 # bashbuilder
-##### 注意，risc-v32版本只支持bash5.3，很抱歉，我不得不这样！
 
 一键编译 Bash，支持多架构、多版本、静态/动态链接。
 
