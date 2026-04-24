@@ -6,12 +6,15 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 ba=$(find $HOME/bashbuild -name "bash")
-if [ $? -eq 0 ]; then
-    cp -r ${ba} bashelf/ || mkdir ~/bashelf || cp -r ${ba} bashelf/
+if [[ -z "${ba}" ]]; then
+    cp -r ${ba} bashelf/ || mkdir ~/bashelf || cp -r ${ba} bashelf/ 2>&1 /dev/null
 fi
 if [[ -d "$HOME/bashbuild" ]]; then
     rm -rf "$HOME/bashbuild"
 fi
+
+clear
+
 error_exit() {
     local log_content=""
     echo -e "${RED}[ERROR]${NC} $1"
@@ -973,6 +976,248 @@ build_bash_version_SR3() {
     cd ../..
 }
 
+build_bash_version_DM() {
+    if ! command -v mips-linux-gnu-gcc &> /dev/null; then
+        sudo apt update
+        sudo apt install -y gcc-mips-linux-gnu binutils-mips-linux-gnu
+    fi
+    local version="$1"
+    local tarball="bash-${version}.tar.gz"
+    local url="https://ftp.gnu.org/gnu/bash/${tarball}"
+    
+    echo -e "${GREEN}Building Bash ${version}...${NC}"
+    
+    # 下载
+    if [ -f "$tarball" ]; then
+        echo "Using existing $tarball"
+    else
+        echo "Downloading ${url}..."
+        wget "$url" || error_exit "Download failed"
+    fi
+    
+    # 解压
+    echo "Extracting..."
+    tar -xzf "$tarball" || error_exit "Extraction failed"
+    
+    cd "bash-${version}" || error_exit "Cannot enter directory"
+    
+    # 获取编译核心数
+    read -p "Enter number of cores for compilation [default: $(nproc)]: " cores
+    cores=${cores:-$(nproc)}
+    
+    # 配置和编译
+    echo "Configuring..."
+    ./configure --host=mips-linux-gnu \
+    --prefix=/usr/local || error_exit "Configure failed"
+    
+    echo "Compiling with $cores cores..."
+    make -j"$cores" CC=mips-linux-gnu-gcc 2>&1 | tee build.log
+    
+    # 检查编译结果（更可靠的方法）
+    if [ -f "bash" ] || [ -f "./bash" ]; then
+        echo -e "${GREEN}Compilation successful!${NC}"
+    else
+        error_exit "Compilation failed. Check build.log"
+    fi
+    
+    # 安装
+    read -p "Install Bash ${version}? (Y/n) " answer
+    if [[ "$answer" == "Y" || "$answer" == "y" ]]; then
+        sudo make install
+        echo -e "${GREEN}Bash ${version} installed successfully!${NC}"
+        echo "Installed to: /usr/local/bin/bash"
+        /usr/local/bin/bash --version
+    else
+        echo "Binary location: $(pwd)/bash"
+        echo "You can install later with: sudo make install"
+    fi
+    
+    cd ../..
+}
+
+build_bash_version_SM() {
+    if ! command -v mips-linux-gnu-gcc &> /dev/null; then
+        sudo apt update
+        sudo apt install -y gcc-mips-linux-gnu binutils-mips-linux-gnu
+    fi
+    local version="$1"
+    local tarball="bash-${version}.tar.gz"
+    local url="https://ftp.gnu.org/gnu/bash/${tarball}"
+    
+    echo -e "${GREEN}Building Bash ${version}...${NC}"
+    
+    # 下载
+    if [ -f "$tarball" ]; then
+        echo "Using existing $tarball"
+    else
+        echo "Downloading ${url}..."
+        wget "$url" || error_exit "Download failed"
+    fi
+    
+    # 解压
+    echo "Extracting..."
+    tar -xzf "$tarball" || error_exit "Extraction failed"
+    
+    cd "bash-${version}" || error_exit "Cannot enter directory"
+    
+    # 获取编译核心数
+    read -p "Enter number of cores for compilation [default: $(nproc)]: " cores
+    cores=${cores:-$(nproc)}
+    
+    # 配置和编译
+    echo "Configuring..."
+    ./configure --host=mips-linux-gnu \
+    --enable-static-link \
+    --without-bash-malloc \
+    --prefix=/usr/local || error_exit "Configure failed"
+    
+    echo "Compiling with $cores cores..."
+    make -j"$cores" CC=mips-linux-gnu-gcc 2>&1 | tee build.log
+    
+    # 检查编译结果（更可靠的方法）
+    if [ -f "bash" ] || [ -f "./bash" ]; then
+        echo -e "${GREEN}Compilation successful!${NC}"
+    else
+        error_exit "Compilation failed. Check build.log"
+    fi
+    
+    # 安装
+    read -p "Install Bash ${version}? (Y/n) " answer
+    if [[ "$answer" == "Y" || "$answer" == "y" ]]; then
+        sudo make install
+        echo -e "${GREEN}Bash ${version} installed successfully!${NC}"
+        echo "Installed to: /usr/local/bin/bash"
+        /usr/local/bin/bash --version
+    else
+        echo "Binary location: $(pwd)/bash"
+        echo "You can install later with: sudo make install"
+    fi
+    
+    cd ../..
+}
+
+build_bash_version_DP() {
+    if ! command -v powerpc-linux-gnu-gcc &> /dev/null; then
+        sudo apt update
+        sudo apt install -y gcc-powerpc-linux-gnu binutils-powerpc-linux-gnu
+    fi
+    local version="$1"
+    local tarball="bash-${version}.tar.gz"
+    local url="https://ftp.gnu.org/gnu/bash/${tarball}"
+    
+    echo -e "${GREEN}Building Bash ${version}...${NC}"
+    
+    # 下载
+    if [ -f "$tarball" ]; then
+        echo "Using existing $tarball"
+    else
+        echo "Downloading ${url}..."
+        wget "$url" || error_exit "Download failed"
+    fi
+    
+    # 解压
+    echo "Extracting..."
+    tar -xzf "$tarball" || error_exit "Extraction failed"
+    
+    cd "bash-${version}" || error_exit "Cannot enter directory"
+    
+    # 获取编译核心数
+    read -p "Enter number of cores for compilation [default: $(nproc)]: " cores
+    cores=${cores:-$(nproc)}
+    
+    # 配置和编译
+    echo "Configuring..."
+    ./configure \
+    --host=powerpc-linux-gnu \
+    --prefix=/usr/local || error_exit "Configure failed"
+    
+    echo "Compiling with $cores cores..."
+    make -j"$cores" CC=powerpc-linux-gnu-gcc 2>&1 | tee build.log
+    
+    # 检查编译结果（更可靠的方法）
+    if [ -f "bash" ] || [ -f "./bash" ]; then
+        echo -e "${GREEN}Compilation successful!${NC}"
+    else
+        error_exit "Compilation failed. Check build.log"
+    fi
+    
+    # 安装
+    read -p "Install Bash ${version}? (Y/n) " answer
+    if [[ "$answer" == "Y" || "$answer" == "y" ]]; then
+        sudo make install
+        echo -e "${GREEN}Bash ${version} installed successfully!${NC}"
+        echo "Installed to: /usr/local/bin/bash"
+        /usr/local/bin/bash --version
+    else
+        echo "Binary location: $(pwd)/bash"
+        echo "You can install later with: sudo make install"
+    fi
+    
+    cd ../..
+}
+
+build_bash_version_SP() {
+    if ! command -v powerpc-linux-gnu-gcc &> /dev/null; then
+        sudo apt update
+        sudo apt install -y gcc-powerpc-linux-gnu binutils-powerpc-linux-gnu
+    fi
+    local version="$1"
+    local tarball="bash-${version}.tar.gz"
+    local url="https://ftp.gnu.org/gnu/bash/${tarball}"
+    
+    echo -e "${GREEN}Building Bash ${version}...${NC}"
+    
+    # 下载
+    if [ -f "$tarball" ]; then
+        echo "Using existing $tarball"
+    else
+        echo "Downloading ${url}..."
+        wget "$url" || error_exit "Download failed"
+    fi
+    
+    # 解压
+    echo "Extracting..."
+    tar -xzf "$tarball" || error_exit "Extraction failed"
+    
+    cd "bash-${version}" || error_exit "Cannot enter directory"
+    
+    # 获取编译核心数
+    read -p "Enter number of cores for compilation [default: $(nproc)]: " cores
+    cores=${cores:-$(nproc)}
+    
+    # 配置和编译
+    echo "Configuring..."
+    ./configure \
+    --host=powerpc-linux-gnu \
+    --enable-static-link \
+    --without-bash-malloc \
+    --prefix=/usr/local || error_exit "Configure failed"
+    
+    echo "Compiling with $cores cores..."
+    make -j"$cores" CC=powerpc-linux-gnu-gcc 2>&1 | tee build.log
+    
+    # 检查编译结果（更可靠的方法）
+    if [ -f "bash" ] || [ -f "./bash" ]; then
+        echo -e "${GREEN}Compilation successful!${NC}"
+    else
+        error_exit "Compilation failed. Check build.log"
+    fi
+    
+    # 安装
+    read -p "Install Bash ${version}? (Y/n) " answer
+    if [[ "$answer" == "Y" || "$answer" == "y" ]]; then
+        sudo make install
+        echo -e "${GREEN}Bash ${version} installed successfully!${NC}"
+        echo "Installed to: /usr/local/bin/bash"
+        /usr/local/bin/bash --version
+    else
+        echo "Binary location: $(pwd)/bash"
+        echo "You can install later with: sudo make install"
+    fi
+    
+    cd ../..
+}
+
 echo -e "${GREEN}=== Bash Compilation Script ===${NC}"
 echo "Welcome to bash installation script"
 sleep 1
@@ -991,7 +1236,7 @@ while true; do
     echo ""
     echo "Available versions: 5.0, 5.1, 5.2, 5.3"
     sleep 1
-    read -p "Architecture (x86_64|ARM64/ARM32|i686/RISC-V64/32)?>>" arch
+    read -p "Architecture (x86_64|ARM64/ARM32|i686/RISC-V64/32|PowerPC/mips)?>>" arch
     read -p "Dynamic/Static? >> " build_type
     if [[ "$arch" == "x86_64" || "$arch" == "X86_64" ]]; then
         if [[ "$build_type" == "Dynamic" || "$build_type" == "dynamic" ]]; then
@@ -1191,7 +1436,73 @@ while true; do
         else
             echo -e "${RED}Invalid input. Please enter 'Dynamic' or 'Static'.${NC}"
         fi
+    elif [[ "$arch" == "PowerPC" || "$arch" == "powerpc" ]]; then
+        if [[ "$build_type" == "Dynamic" || "$build_type" == "dynamic" ]]; then
+            read -p "Select version [default: 5.2]: " version
+            version=${version:-5.2}
+    
+            case $version in
+                5.0|5.1|5.2|5.3)
+                    build_bash_version_DP "$version"
+                    break
+                    ;;
+                *)
+                    echo -e "${RED}Invalid version. Please choose 5.0, 5.1, 5.2, or 5.3${NC}"
+                    ;;
+                esac
+            echo -e "${GREEN}✓ Script completed!${NC}"
+        elif [[ "$build_type" == "Static" || "$build_type" == "static" ]]; then
+            read -p "Select version [default: 5.2]: " version
+    
+            version=${version:-5.2}
+    
+            case $version in
+                5.0|5.1|5.2|5.3)
+                    build_bash_version_SP "$version"
+                    break
+                    ;;
+                *)
+                    echo -e "${RED}Invalid version. Please choose 5.0, 5.1, 5.2, or 5.3${NC}"
+                    ;;
+                esac
+            echo -e "${GREEN}✓ Script completed!${NC}"
+        else
+            echo -e "${RED}Invalid input. Please enter 'Dynamic' or 'Static'.${NC}"
+        fi
+    elif [[ "$arch" == "mips" || "$arch" == "MIPS" ]]; then
+        if [[ "$build_type" == "Dynamic" || "$build_type" == "dynamic" ]]; then
+            read -p "Select version [default: 5.2]: " version
+            version=${version:-5.2}
+    
+            case $version in
+                5.0|5.1|5.2|5.3)
+                    build_bash_version_DM "$version"
+                    break
+                    ;;
+                *)
+                    echo -e "${RED}Invalid version. Please choose 5.0, 5.1, 5.2, or 5.3${NC}"
+                    ;;
+                esac
+            echo -e "${GREEN}✓ Script completed!${NC}"
+        elif [[ "$build_type" == "Static" || "$build_type" == "static" ]]; then
+            read -p "Select version [default: 5.2]: " version
+    
+            version=${version:-5.2}
+    
+            case $version in
+                5.0|5.1|5.2|5.3)
+                    build_bash_version_SM "$version"
+                    break
+                    ;;
+                *)
+                    echo -e "${RED}Invalid version. Please choose 5.0, 5.1, 5.2, or 5.3${NC}"
+                    ;;
+                esac
+            echo -e "${GREEN}✓ Script completed!${NC}"
+        else
+            echo -e "${RED}Invalid input. Please enter 'Dynamic' or 'Static'.${NC}"
+        fi
     else
-        echo -e "${RED}Invalid architecture. Please enter x86_64, ARM64/ARM32, i686/RISC-V64, or RISC-V32.${NC}"
+        echo -e "${RED}Invalid architecture. Please enter x86_64, ARM64/ARM32, i686/RISC-V64, RISC-V32, PowerPC, or MIPS.${NC}"
     fi
 done
