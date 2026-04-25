@@ -70,7 +70,7 @@ Architecture_Selection() {
         case $version in
             5.0|5.1|5.2|5.3)
                 $1 "$version"
-                break
+                return 0
                 ;;
             *)
                 echo -e "${RED}Invalid version. Please choose 5.0, 5.1, 5.2, or 5.3${NC}"
@@ -85,7 +85,7 @@ Architecture_Selection() {
         case $version in
             5.0|5.1|5.2|5.3)
                 $2 "$version"
-                break
+                return 0
                 ;;
             *)
                 echo -e "${RED}Invalid version. Please choose 5.0, 5.1, 5.2, or 5.3${NC}"
@@ -1304,20 +1304,28 @@ while true; do
     read -p "Dynamic/Static? >> " build_type
     if [[ "$arch" == "x86_64" || "$arch" == "X86_64" ]]; then
         Architecture_Selection build_bash_version_DX build_bash_version_SX
+        [[ $? -eq 0 ]] && break
     elif [[ "$arch" == "ARM64" || "$arch" == "arm64" ]]; then
-        Architecture_Selection A build_bash_version_SA
+        Architecture_Selection build_bash_version_DA build_bash_version_SA
+        [[ $? -eq 0 ]] && break
     elif [[ "$arch" == "i686" || "$arch" == "I686" ]]; then
         Architecture_Selection build_bash_version_DI build_bash_version_SI
+        [[ $? -eq 0 ]] && break
     elif [[ "$arch" == "ARM32" || "$arch" == "arm32" ]]; then
         Architecture_Selection build_bash_version_DA3 build_bash_version_SA3
+        [[ $? -eq 0 ]] && break
     elif [[ "$arch" == "RISC-V64" || "$arch" == "risc-v64" ]]; then
         Architecture_Selection build_bash_version_DR build_bash_version_SR
+        [[ $? -eq 0 ]] && break
     elif [[ "$arch" == "RISC-V32" || "$arch" == "risc-v32" ]]; then
         Architecture_Selection build_bash_version_DR3 build_bash_version_SR3
+        [[ $? -eq 0 ]] && break
     elif [[ "$arch" == "PowerPC" || "$arch" == "powerpc" ]]; then
         Architecture_Selection build_bash_version_DP build_bash_version_SP
+        [[ $? -eq 0 ]] && break
     elif [[ "$arch" == "mips" || "$arch" == "MIPS" ]]; then
         Architecture_Selection build_bash_version_DM build_bash_version_SM
+        [[ $? -eq 0 ]] && break
     else
         echo -e "${RED}Invalid architecture. Please enter x86_64, ARM64/ARM32, i686/RISC-V64, RISC-V32, PowerPC, or MIPS.${NC}"
     fi
